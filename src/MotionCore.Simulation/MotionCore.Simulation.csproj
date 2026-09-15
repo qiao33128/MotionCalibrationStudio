@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>MotionCore.Simulation</RootNamespace>
+    <AssemblyName>MotionCore.Simulation</AssemblyName>
+    <Description>纯软件仿真：梯形速度曲线运动卡、可注入误差的仿真相机与图像质心定位器。无硬件即可端到端验证整条链路。</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MotionCore.Abstractions\MotionCore.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

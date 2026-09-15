@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>MotionCore.Calibration</RootNamespace>
+    <AssemblyName>MotionCore.Calibration</AssemblyName>
+    <Description>九点标定数学核心：仿射/单应/二次多项式模型、最小二乘解算、精度评估与留一交叉验证。</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MotionCore.Abstractions\MotionCore.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

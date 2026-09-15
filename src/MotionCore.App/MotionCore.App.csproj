@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>MotionCore.App</RootNamespace>
+    <AssemblyName>MotionCalibrationStudio</AssemblyName>
+    <Description>上位机界面：运动控制台、九点标定可视化与视觉对位演示。</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MotionCore.Abstractions\MotionCore.Abstractions.csproj" />
+    <ProjectReference Include="..\MotionCore.Calibration\MotionCore.Calibration.csproj" />
+    <ProjectReference Include="..\MotionCore.Simulation\MotionCore.Simulation.csproj" />
+    <ProjectReference Include="..\MotionCore.Vendors\MotionCore.Vendors.csproj" />
+  </ItemGroup>
+
+</Project>

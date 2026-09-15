@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>MotionCore.Abstractions</RootNamespace>
+    <AssemblyName>MotionCore.Abstractions</AssemblyName>
+    <Description>与厂商无关的运动控制抽象层：控制器接口、轴/IO 模型、通用编排基类与厂商原语契约。</Description>
+  </PropertyGroup>
+
+</Project>

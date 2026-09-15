@@ -1,0 +1,491 @@
+<Window x:Class="MotionCore.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:MotionCore.App.Controls"
+        Title="运动控制九点标定上位机 · MotionCalibrationStudio"
+        Height="960" Width="1600"
+        MinHeight="720" MinWidth="1280"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource WindowBrush}">
+
+  <Window.Resources>
+    <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+  </Window.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="176"/>
+    </Grid.RowDefinitions>
+
+    <!-- ═════════════ 顶部状态条 ═════════════ -->
+    <Border Grid.Row="0" Background="{StaticResource PanelBrush}"
+            BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1" Padding="16,10">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0" Orientation="Horizontal">
+          <TextBlock Text="运动控制 · 九点标定上位机" FontSize="16" FontWeight="Bold"
+                     Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
+          <TextBlock Text="{Binding ControllerName}" Margin="14,0,0,0" FontSize="12"
+                     Foreground="{StaticResource SubTextBrush}" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <StackPanel Grid.Column="2" Orientation="Horizontal">
+          <Button Content="▶ 一键自动演示（全链路）" Style="{StaticResource PrimaryButton}"
+                  Margin="0,0,14,0" Padding="12,4" Command="{Binding AutoDemoCommand}"/>
+          <TextBlock Text="处理中…" Margin="0,0,14,0" FontSize="12" Foreground="{StaticResource WarnBrush}"
+                     VerticalAlignment="Center"
+                     Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+          <Ellipse Width="12" Height="12" Fill="{Binding StateBrush}" VerticalAlignment="Center"/>
+          <TextBlock Text="{Binding StatusText}" Margin="8,0,0,0" FontSize="12"
+                     Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
+          <TextBlock Text="｜报警：" Margin="16,0,0,0" FontSize="12"
+                     Foreground="{StaticResource SubTextBrush}" VerticalAlignment="Center"/>
+          <TextBlock Text="{Binding LastAlarmText}" FontSize="12" MaxWidth="520" TextTrimming="CharacterEllipsis"
+                     Foreground="{StaticResource WarnBrush}" VerticalAlignment="Center"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- ═════════════ 主功能页 ═════════════ -->
+    <TabControl Grid.Row="1" Margin="10,10,10,6" SelectedIndex="{Binding SelectedTabIndex}">
+
+      <!-- ───────── ① 运动控制台 ───────── -->
+      <TabItem Header="① 运动控制台">
+        <Grid Margin="12">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1.05*"/>
+            <ColumnDefinition Width="1*"/>
+          </Grid.ColumnDefinitions>
+
+          <DockPanel Grid.Column="0" Margin="0,0,12,0">
+            <TextBlock DockPanel.Dock="Top" Text="轴状态（后台状态轮询实时刷新，跟随误差 = 指令位置 − 实际位置）"
+                       Style="{StaticResource SectionTitle}"/>
+            <DataGrid ItemsSource="{Binding Axes}">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="轴" Binding="{Binding Name}" Width="44"/>
+                <DataGridTextColumn Header="指令位置" Binding="{Binding CommandPosition, StringFormat=F4}" Width="*"/>
+                <DataGridTextColumn Header="实际位置" Binding="{Binding ActualPosition, StringFormat=F4}" Width="*"/>
+                <DataGridTextColumn Header="跟随误差" Binding="{Binding FollowingError, StringFormat=F5}" Width="*"/>
+                <DataGridTextColumn Header="速度" Binding="{Binding Velocity, StringFormat=F2}" Width="*"/>
+                <DataGridTextColumn Header="单位" Binding="{Binding Unit}" Width="46"/>
+                <DataGridCheckBoxColumn Header="使能" Binding="{Binding ServoEnabled}" Width="50"/>
+                <DataGridCheckBoxColumn Header="到位" Binding="{Binding InPosition}" Width="50"/>
+                <DataGridCheckBoxColumn Header="回零" Binding="{Binding Homed}" Width="50"/>
+                <DataGridCheckBoxColumn Header="正限" Binding="{Binding PositiveLimit}" Width="50"/>
+                <DataGridCheckBoxColumn Header="负限" Binding="{Binding NegativeLimit}" Width="50"/>
+                <DataGridTextColumn Header="报警" Binding="{Binding AlarmText}" Width="96"/>
+              </DataGrid.Columns>
+            </DataGrid>
+          </DockPanel>
+
+          <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+              <Border Style="{StaticResource PanelBorder}" Margin="0,0,0,10">
+                <StackPanel>
+                  <TextBlock Text="单轴手动控制" Style="{StaticResource SectionTitle}"/>
+
+                  <TextBlock Text="选择轴" Style="{StaticResource Caption}"/>
+                  <ComboBox Style="{StaticResource Combo}" ItemsSource="{Binding AvailableAxes}"
+                            SelectedItem="{Binding SelectedAxis}"/>
+
+                  <TextBlock Text="点动速度 (mm/s) —— 按住走、松开停" Style="{StaticResource Caption}"/>
+                  <TextBox Style="{StaticResource ValueBox}"
+                           Text="{Binding JogVelocity, UpdateSourceTrigger=PropertyChanged}"/>
+
+                  <WrapPanel>
+                    <Button Content="点动 −" Style="{StaticResource FlatButton}" Command="{Binding JogNegativeCommand}"/>
+                    <Button Content="点动 +" Style="{StaticResource FlatButton}" Command="{Binding JogPositiveCommand}"/>
+                    <Button Content="停止点动" Style="{StaticResource FlatButton}" Command="{Binding StopJogCommand}"/>
+                    <Button Content="使能" Style="{StaticResource FlatButton}" Command="{Binding EnableCommand}"/>
+                    <Button Content="失能" Style="{StaticResource FlatButton}" Command="{Binding DisableCommand}"/>
+                    <Button Content="单轴回零" Style="{StaticResource FlatButton}" Command="{Binding HomeSelectedCommand}"/>
+                    <Button Content="注入报警(演示)" Style="{StaticResource WarnButton}" Command="{Binding InjectAlarmCommand}"/>
+                  </WrapPanel>
+                </StackPanel>
+              </Border>
+
+              <Border Style="{StaticResource PanelBorder}" Margin="0,0,0,10">
+                <StackPanel>
+                  <TextBlock Text="多轴联动 / 系统动作" Style="{StaticResource SectionTitle}"/>
+
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*"/>
+                      <ColumnDefinition Width="10"/>
+                      <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                      <TextBlock Text="目标 X (mm)" Style="{StaticResource Caption}"/>
+                      <TextBox Style="{StaticResource ValueBox}"
+                               Text="{Binding TargetX, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                      <TextBlock Text="目标 Y (mm)" Style="{StaticResource Caption}"/>
+                      <TextBox Style="{StaticResource ValueBox}"
+                               Text="{Binding TargetY, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                  </Grid>
+
+                  <WrapPanel>
+                    <Button Content="联动定位" Style="{StaticResource PrimaryButton}" Command="{Binding MoveAbsoluteCommand}"/>
+                    <Button Content="全部回零" Style="{StaticResource FlatButton}" Command="{Binding HomeAllCommand}"/>
+                    <Button Content="停止" Style="{StaticResource FlatButton}" Command="{Binding StopCommand}"/>
+                    <Button Content="急停" Style="{StaticResource DangerButton}" Command="{Binding EmergencyStopCommand}"/>
+                    <Button Content="报警复位" Style="{StaticResource OkButton}" Command="{Binding ResetAlarmCommand}"/>
+                    <Button Content="重新初始化" Style="{StaticResource FlatButton}" Command="{Binding InitializeCommand}"/>
+                    <Button Content="断开连接" Style="{StaticResource FlatButton}" Command="{Binding ShutdownCommand}"/>
+                  </WrapPanel>
+
+                  <TextBlock Text="提示：把目标位置设成 500 试试 —— 软限位会在上位机侧就被拦截，控制器状态不会被切到报警。"
+                             TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource SubTextBrush}"/>
+                </StackPanel>
+              </Border>
+
+              <Border Style="{StaticResource PanelBorder}">
+                <StackPanel>
+                  <TextBlock Text="数字量 IO" Style="{StaticResource SectionTitle}"/>
+                  <Button Content="刷新 IO" Style="{StaticResource FlatButton}" Command="{Binding RefreshIoCommand}"/>
+                  <TextBox Style="{StaticResource ReportBox}" Height="60" Text="{Binding IoStatusText, Mode=OneWay}"/>
+                </StackPanel>
+              </Border>
+
+            </StackPanel>
+          </ScrollViewer>
+        </Grid>
+      </TabItem>
+
+      <!-- ───────── ② 九点标定 ───────── -->
+      <TabItem Header="② 九点标定">
+        <Grid Margin="12">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="286"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="392"/>
+          </Grid.ColumnDefinitions>
+
+          <ScrollViewer Grid.Column="0" Margin="0,0,12,0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <Border Style="{StaticResource PanelBorder}" Margin="0,0,0,10">
+                <StackPanel>
+                  <TextBlock Text="标定流程" Style="{StaticResource SectionTitle}"/>
+
+                  <TextBlock Text="示教行程半幅 ±(mm)" Style="{StaticResource Caption}"/>
+                  <TextBox Style="{StaticResource ValueBox}"
+                           Text="{Binding TeachingSpanMm, UpdateSourceTrigger=PropertyChanged}"/>
+
+                  <TextBlock Text="标定模型" Style="{StaticResource Caption}"/>
+                  <ComboBox Style="{StaticResource Combo}" ItemsSource="{Binding AvailableModels}"
+                            SelectedItem="{Binding SelectedModel}"/>
+
+                  <CheckBox Style="{StaticResource Check}" Content="执行留一交叉验证（判断是否过拟合）"
+                            IsChecked="{Binding RunLeaveOneOut}"/>
+
+                  <Button Content="▶ ① 开始九点示教" Style="{StaticResource PrimaryButton}"
+                          HorizontalAlignment="Stretch" Command="{Binding TeachCommand}"/>
+                  <Button Content="② 重新解算标定" Style="{StaticResource FlatButton}"
+                          HorizontalAlignment="Stretch" Command="{Binding CalibrateCommand}"/>
+                  <Button Content="③ 三种模型对比" Style="{StaticResource FlatButton}"
+                          HorizontalAlignment="Stretch" Command="{Binding CompareModelsCommand}"/>
+                  <Button Content="保存标定文件" Style="{StaticResource FlatButton}"
+                          HorizontalAlignment="Stretch" Command="{Binding SaveCalibrationCommand}"/>
+                  <Button Content="载入标定文件" Style="{StaticResource FlatButton}"
+                          HorizontalAlignment="Stretch" Command="{Binding LoadCalibrationCommand}"/>
+                </StackPanel>
+              </Border>
+
+              <Border Style="{StaticResource PanelBorder}">
+                <StackPanel>
+                  <TextBlock Text="说明" Style="{StaticResource SectionTitle}"/>
+                  <TextBlock TextWrapping="Wrap" FontSize="11.5" Foreground="{StaticResource SubTextBrush}">
+                    示教即：平台依次走到 3×3 网格的 9 个机械坐标，每个位置拍一张图并提取 Mark 的亚像素质心，
+                    得到 9 组「机械坐标 ↔ 像素坐标」。
+                    <LineBreak/><LineBreak/>
+                    注意标定中心取的是 <Run Foreground="{StaticResource WarnBrush}">Mark 的真实机械坐标</Run>，
+                    因为相机随平台移动、Mark 固定不动，只有网格铺满视野才能让 9 个点最大化利用像素分辨率。
+                    <LineBreak/><LineBreak/>
+                    <Run Foreground="{StaticResource TextBrush}">虚线红箭头</Run> 是残差向量（放大 200 倍显示）：
+                    整体朝同一方向 = 系统偏差；某个点单独跳出去 = 该点采集异常；呈环形 = 镜头畸变未被模型吸收。
+                  </TextBlock>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+
+          <Grid Grid.Column="1" Margin="0,0,12,0">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="*"/>
+              <RowDefinition Height="10"/>
+              <RowDefinition Height="216"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Style="{StaticResource PanelBorder}" Padding="0">
+              <controls:CalibrationCanvas Result="{Binding Calibration}" ErrorAmplification="200"/>
+            </Border>
+
+            <DataGrid Grid.Row="2" ItemsSource="{Binding CalibrationRows}">
+              <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsResidualOutlier}" Value="True">
+                      <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
+                      <Setter Property="Background" Value="#2B1414"/>
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </DataGrid.RowStyle>
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="点" Binding="{Binding Label}" Width="46"/>
+                <DataGridTextColumn Header="像素 U" Binding="{Binding ImageU, StringFormat=F2}" Width="*"/>
+                <DataGridTextColumn Header="像素 V" Binding="{Binding ImageV, StringFormat=F2}" Width="*"/>
+                <DataGridTextColumn Header="机械 X" Binding="{Binding MachineX, StringFormat=F4}" Width="*"/>
+                <DataGridTextColumn Header="机械 Y" Binding="{Binding MachineY, StringFormat=F4}" Width="*"/>
+                <DataGridTextColumn Header="预测 X" Binding="{Binding PredictedX, StringFormat=F4}" Width="*"/>
+                <DataGridTextColumn Header="预测 Y" Binding="{Binding PredictedY, StringFormat=F4}" Width="*"/>
+                <DataGridTextColumn Header="残差 X" Binding="{Binding ResidualX, StringFormat=F6}" Width="*"/>
+                <DataGridTextColumn Header="残差 Y" Binding="{Binding ResidualY, StringFormat=F6}" Width="*"/>
+                <DataGridTextColumn Header="残差模长" Binding="{Binding ResidualMagnitude, StringFormat=F6}" Width="*"/>
+              </DataGrid.Columns>
+            </DataGrid>
+          </Grid>
+
+          <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="*"/>
+              <RowDefinition Height="10"/>
+              <RowDefinition Height="230"/>
+            </Grid.RowDefinitions>
+
+            <TextBox Grid.Row="0" Style="{StaticResource ReportBox}" Text="{Binding CalibrationReport, Mode=OneWay}"/>
+            <TextBox Grid.Row="2" Style="{StaticResource ReportBox}" Text="{Binding ModelComparisonReport, Mode=OneWay}"/>
+          </Grid>
+        </Grid>
+      </TabItem>
+
+      <!-- ───────── ③ 视觉对位 ───────── -->
+      <TabItem Header="③ 视觉对位">
+        <Grid Margin="12">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="520"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+
+          <DockPanel Grid.Column="0" Margin="0,0,12,0">
+            <TextBlock DockPanel.Dock="Top" Text="仿真相机实时画面（Otsu 阈值 + 灰度加权质心定位）"
+                       Style="{StaticResource SectionTitle}"/>
+            <Border DockPanel.Dock="Bottom" Style="{StaticResource PanelBorder}" Margin="0,10,0,0" Padding="8">
+              <StackPanel>
+                <TextBlock Text="{Binding CameraInfo}" TextWrapping="Wrap" FontSize="11.5"
+                           Foreground="{StaticResource MonoFace}"/>
+                <TextBlock Text="{Binding SimulatedMarkPositionText}" TextWrapping="Wrap" FontSize="11"
+                           Margin="0,6,0,0" Foreground="{StaticResource SubTextBrush}"/>
+                <Button Content="重新拍照" Style="{StaticResource FlatButton}" Margin="0,8,0,0"
+                        HorizontalAlignment="Left" Command="{Binding CaptureCommand}"/>
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource PanelBorder}" Padding="0">
+              <Image Source="{Binding CameraImage}" Stretch="Uniform" SnapsToDevicePixels="True"/>
+            </Border>
+          </DockPanel>
+
+          <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="10"/>
+              <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Style="{StaticResource PanelBorder}">
+              <StackPanel>
+                <TextBlock Text="对位流程（三步演示）" Style="{StaticResource SectionTitle}"/>
+
+                <WrapPanel>
+                  <Button Content="① 建立对位基准" Style="{StaticResource FlatButton}" Command="{Binding SetReferenceCommand}"/>
+                  <Button Content="② 故意偏移来料" Style="{StaticResource WarnButton}" Command="{Binding DisturbCommand}"/>
+                  <Button Content="③ 执行自动对位" Style="{StaticResource PrimaryButton}" Command="{Binding AlignCommand}"/>
+                </WrapPanel>
+
+                <TextBlock Text="{Binding ReferenceText}" FontSize="11.5" Margin="0,4,0,8"
+                           Foreground="{StaticResource WarnBrush}"/>
+
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                  </Grid.ColumnDefinitions>
+
+                  <StackPanel Grid.Column="0">
+                    <TextBlock Text="偏移量 ΔX (mm)" Style="{StaticResource Caption}"/>
+                    <TextBox Style="{StaticResource ValueBox}"
+                             Text="{Binding DisturbanceX, UpdateSourceTrigger=PropertyChanged}"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2">
+                    <TextBlock Text="偏移量 ΔY (mm)" Style="{StaticResource Caption}"/>
+                    <TextBox Style="{StaticResource ValueBox}"
+                             Text="{Binding DisturbanceY, UpdateSourceTrigger=PropertyChanged}"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="4">
+                    <TextBlock Text="收敛阈值 (mm)" Style="{StaticResource Caption}"/>
+                    <TextBox Style="{StaticResource ValueBox}"
+                             Text="{Binding AlignmentToleranceMm, UpdateSourceTrigger=PropertyChanged}"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="6">
+                    <TextBlock Text="最大迭代次数" Style="{StaticResource Caption}"/>
+                    <TextBox Style="{StaticResource ValueBox}"
+                             Text="{Binding AlignmentMaxIterations, UpdateSourceTrigger=PropertyChanged}"/>
+                  </StackPanel>
+                </Grid>
+
+                <TextBlock Text="初始偏差安全上限 (mm) —— 超过则直接拒绝补偿移动，防止撞机"
+                           Style="{StaticResource Caption}"/>
+                <TextBox Style="{StaticResource ValueBox}" Width="150" HorizontalAlignment="Left"
+                         Text="{Binding AlignmentMaxInitialErrorMm, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource SubTextBrush}">
+                  <Run FontWeight="Bold" Foreground="{StaticResource WarnBrush}">想演示「拒绝移动」这条安全护栏：</Run>
+                  把安全上限改小（例如 0.1），或者把偏移量调到 2 mm 以上，再点「③ 执行自动对位」——
+                  平台会<Run Foreground="{StaticResource ErrorBrush}">纹丝不动</Run>并给出明确原因。
+                  这是因为标定参数被改坏或视觉误识别时，算出来的补偿量可能高达几十毫米，直接执行就是撞机。
+                </TextBlock>
+              </StackPanel>
+            </Border>
+
+            <TextBox Grid.Row="2" Style="{StaticResource ReportBox}" Text="{Binding AlignmentTrace, Mode=OneWay}"/>
+          </Grid>
+        </Grid>
+      </TabItem>
+
+      <!-- ───────── ④ 架构说明 ───────── -->
+      <TabItem Header="④ 架构说明">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="12">
+          <Border Style="{StaticResource PanelBorder}">
+            <StackPanel>
+              <TextBlock Text="这套上位机为什么这样分层" FontSize="16" FontWeight="Bold"
+                         Foreground="{StaticResource TextBrush}" Margin="0,0,0,12"/>
+
+              <TextBlock Style="{StaticResource MonoText}" TextWrapping="Wrap">
+MotionCore.Abstractions   与厂商无关的抽象：IMotionController / IVendorCardApi / IVisionLocator / ICamera
+                         └ MotionControllerBase —— 状态机、软限位拦截、等待到位、多轴同步、报警归一化（全项目一份）
+MotionCore.Simulation     仿真卡（梯形速度曲线）+ 仿真相机（真的渲染位图）+ Otsu 质心定位器
+MotionCore.Calibration    九点标定数学核心：仿射 / 单应 / 二次多项式 + Householder QR + Hartley 归一化 + LOOCV
+                         └ NinePointTeachingService —— 示教流程
+                         └ AlignmentService —— 视觉对位闭环（补偿 + 复检 + 安全护栏）
+MotionCore.Vendors        正运动 ZMC / 固高 GTS / 雷赛 DMC 的 P/Invoke 原语实现
+MotionCore.App            WPF 上位机界面（MVVM，零第三方依赖）
+              </TextBlock>
+
+              <TextBlock Margin="0,16,0,10" TextWrapping="Wrap" FontSize="12.5"
+                         Foreground="{StaticResource TextBrush}">
+                <Run FontWeight="Bold">一、厂商差异只收敛在「十几个原语」上</Run>
+              </TextBlock>
+              <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource SubTextBrush}">
+                雷赛、固高、凌华、正运动的 SDK 在函数名、参数语义、轴号起点、错误码上都不一样，
+                但真正有差异的其实只有「连接 / 使能 / 设参数 / 绝对定位 / 相对定位 / 点动 / 回零 / 停止 / 读状态 / 读写 IO」这几个动作。
+                把它们定义成 IVendorCardApi，于是：
+                <LineBreak/>
+                ① 状态机、等待到位、多轴矢量同步、软限位前置拦截这些「所有厂商都绕不开」的逻辑只写一份（MotionControllerBase）；
+                <LineBreak/>
+                ② <Run Foreground="{StaticResource OkBrush}">仿真卡天然就是这个接口的一个实现</Run> —— 所以整套上位机不需要任何硬件就能端到端跑通、被测覆盖；
+                <LineBreak/>
+                ③ 换卡时业务层零改动，只需新增一个 200 行左右的适配器。
+              </TextBlock>
+
+              <TextBlock Margin="0,16,0,10" TextWrapping="Wrap" FontSize="12.5"
+                         Foreground="{StaticResource TextBrush}">
+                <Run FontWeight="Bold">二、九点标定解的是「像素 → 机械」的最小二乘问题</Run>
+              </TextBlock>
+              <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource SubTextBrush}">
+                相机随平台移动、Mark 固定不动：平台走到 9 个位置，Mark 在图像里相应地移动，于是每个位置都得到一组
+                (机械坐标, 像素坐标)。用这 9 组点拟合像素到机械的映射：
+                <LineBreak/>
+                · 仿射（6 参数）：平移 + 旋转 + 各向异性缩放 + 剪切，覆盖相机正常安装的全部情况，抗噪最强，首选；
+                <LineBreak/>
+                · 单应（8 参数）：多两个透视分量，相机有安装倾角、标定面与运动面不平行时使用；
+                <LineBreak/>
+                · 二次多项式（12 参数）：吸收镜头径向畸变，视野大时更准，但也最容易过拟合噪声。
+                <LineBreak/><LineBreak/>
+                工程上三个关键点：
+                <LineBreak/>
+                ① 必须做 <Run Foreground="{StaticResource OkBrush}">Hartley 坐标归一化</Run>（像素量级 ~1e2、毫米量级 ~1e1，
+                  不归一化条件数会差好几个数量级）；
+                <LineBreak/>
+                ② 必须用 <Run Foreground="{StaticResource OkBrush}">QR 分解</Run> 而不是正规方程（正规方程会把条件数平方）；
+                <LineBreak/>
+                ③ 必须做 <Run Foreground="{StaticResource OkBrush}">留一交叉验证</Run> —— RMSE 只说明拟合得好不好，
+                  留一误差才说明对没见过的点准不准；参数多的模型训练残差一定不差，只能以留一误差选型。
+              </TextBlock>
+
+              <TextBlock Margin="0,16,0,10" TextWrapping="Wrap" FontSize="12.5"
+                         Foreground="{StaticResource TextBrush}">
+                <Run FontWeight="Bold">三、对位是闭环，安全护栏比算法本身更重要</Run>
+              </TextBlock>
+              <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource SubTextBrush}">
+                理论上一份精确的仿射模型一次补偿就能到位，但现场有反向间隙、伺服整定误差、镜头畸变残差与视觉噪声，
+                所以必须做成「测量 → 补偿 → 复检」的闭环。
+                <LineBreak/>
+                更要紧的是护栏：标定参数被改坏、或者视觉误识别到别的特征时，算出来的补偿量可能高达几十毫米 ——
+                所以初始偏差超过安全上限时<Run Foreground="{StaticResource ErrorBrush}">直接拒绝移动</Run>，宁可停机让人来看。
+              </TextBlock>
+            </StackPanel>
+          </Border>
+        </ScrollViewer>
+      </TabItem>
+
+    </TabControl>
+
+    <!-- ═════════════ 底部日志 ═════════════ -->
+    <Border Grid.Row="2" Background="{StaticResource PanelBrush}"
+            BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="10,6">
+      <DockPanel>
+        <Grid DockPanel.Dock="Top" Margin="0,0,0,4">
+          <TextBlock Text="运行日志（带毫秒时间戳；后台线程产生的报警与状态变化也会汇总到这里）"
+                     FontSize="11.5" Foreground="{StaticResource SubTextBrush}"/>
+          <Button Content="清空" Style="{StaticResource FlatButton}" Padding="10,2" Margin="0"
+                  HorizontalAlignment="Right" Command="{Binding ClearLogCommand}"/>
+        </Grid>
+        <ListBox x:Name="LogList" ItemsSource="{Binding Logger.Entries}">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <TextBlock Text="{Binding Display}">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="FontFamily" Value="Consolas, Microsoft YaHei UI"/>
+                    <Setter Property="FontSize" Value="11.5"/>
+                    <Setter Property="Foreground" Value="{StaticResource MonoFace}"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding LevelKey}" Value="Success">
+                        <Setter Property="Foreground" Value="{StaticResource OkBrush}"/>
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding LevelKey}" Value="Warning">
+                        <Setter Property="Foreground" Value="{StaticResource WarnBrush}"/>
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding LevelKey}" Value="Error">
+                        <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding LevelKey}" Value="Debug">
+                        <Setter Property="Foreground" Value="#5F7488"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </DockPanel>
+    </Border>
+
+  </Grid>
+</Window>

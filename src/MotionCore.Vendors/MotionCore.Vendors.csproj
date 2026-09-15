@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>MotionCore.Vendors</RootNamespace>
+    <AssemblyName>MotionCore.Vendors</AssemblyName>
+    <Description>厂商适配层：正运动 ZMC / 固高 GTS / 雷赛 DMC 三家运动控制卡的 P/Invoke 原语实现。</Description>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MotionCore.Abstractions\MotionCore.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>
