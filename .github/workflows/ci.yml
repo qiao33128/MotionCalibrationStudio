@@ -33,12 +33,4 @@ jobs:
         run: dotnet build MotionCalibrationStudio.sln --configuration Release --no-restore
 
       - name: 单元测试
-        run: dotnet test tests/MotionCore.Tests/MotionCore.Tests.csproj --configuration Release --no-build --logger "trx;LogFileName=test-results.trx" --results-directory artifacts/test-results
-
-      - name: 上传测试报告
-        if: always()
-        uses: actions/upload-artifact@v5
-        with:
-          name: test-results
-          path: artifacts/test-results
-          if-no-files-found: ignore
+        run: dotnet test tests/MotionCore.Tests/MotionCore.Tests.csproj --configuration Release --no-build --logger "console;verbosity=normal"
